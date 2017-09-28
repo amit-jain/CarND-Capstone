@@ -96,9 +96,10 @@ class WaypointUpdater(object):
         target_vel = self.get_waypoint_velocity(self.base_waypoints[closest_waypoint_index])
         distance_to_light = None
         output_waypoints = []
+        curr_traffic_light = self.trafficlight
 
-        if self.trafficlight is not None and closest_waypoint_index is not None:
-            distance_to_light = self.distance(self.base_waypoints, closest_waypoint_index, self.trafficlight)
+        if curr_traffic_light is not None and closest_waypoint_index is not None:
+            distance_to_light = self.distance(self.base_waypoints, closest_waypoint_index, curr_traffic_light)
 
         if distance_to_light is not None and distance_to_light < TRAFFIC_LIGHT_RANGE:
 
@@ -106,11 +107,11 @@ class WaypointUpdater(object):
             if velocity < 1:
                 velocity = 0;
 
-            if self.trafficlight - closest_waypoint_index > 2:
+            if curr_traffic_light - closest_waypoint_index > 2:
                 output_waypoints.append(self.clone_waypoint(self.base_waypoints[closest_waypoint_index]))
                 self.set_waypoint_velocity(output_waypoints, -1, velocity)
 
-                for i in range(closest_waypoint_index + 1, self.trafficlight - 2):
+                for i in range(closest_waypoint_index + 1, curr_traffic_light - 2):
                     waypoint_index = i % len(self.base_waypoints)
                     segment_distance = self.distance(self.base_waypoints, waypoint_index - 1, waypoint_index)
                     decel_velocity = (segment_distance / distance_to_light) * self.current_velocity
@@ -122,19 +123,19 @@ class WaypointUpdater(object):
                     output_waypoints.append(self.clone_waypoint(self.base_waypoints[waypoint_index]))
                     self.set_waypoint_velocity(output_waypoints, -1, velocity)
 
-            if self.trafficlight == closest_waypoint_index:
-                output_waypoints.append(self.clone_waypoint(self.base_waypoints[self.trafficlight]))
+            if curr_traffic_light == closest_waypoint_index:
+                output_waypoints.append(self.clone_waypoint(self.base_waypoints[curr_traffic_light]))
                 self.set_waypoint_velocity(output_waypoints, -1, 0)
 
             else:
-                output_waypoints.append(self.clone_waypoint(self.base_waypoints[self.trafficlight - 1]))
+                output_waypoints.append(self.clone_waypoint(self.base_waypoints[curr_traffic_light - 1]))
                 self.set_waypoint_velocity(output_waypoints, -1, 0)
-                output_waypoints.append(self.clone_waypoint(self.base_waypoints[self.trafficlight]))
+                output_waypoints.append(self.clone_waypoint(self.base_waypoints[curr_traffic_light]))
                 self.set_waypoint_velocity(output_waypoints, -1, 0)
 
             if len(output_waypoints) < LOOKAHEAD_WPS:
                 remaining_wps = LOOKAHEAD_WPS - len(output_waypoints)
-                for i in range(self.trafficlight, self.trafficlight + remaining_wps):
+                for i in range(curr_traffic_light, curr_traffic_light + remaining_wps):
                     waypoint_index = i % len(self.base_waypoints)
                     output_waypoints.append(self.clone_waypoint(self.base_waypoints[waypoint_index]))
                     self.set_waypoint_velocity(output_waypoints, -1, 0)
